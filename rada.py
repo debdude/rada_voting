@@ -11,7 +11,7 @@ from pyquery import PyQuery as pq
 VOTE_URL_TEMPLATE = (
     "http://w1.c1.rada.gov.ua/pls/radan_gs09/ns_golos_print?g_id={0}&vid=1"
 )
-DOC_DIR = "docs"
+DOC_DIR = "source_docs"
 DELAY = 1
 
 VOTE_DETAILS = "votes.csv"
