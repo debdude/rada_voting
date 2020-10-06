@@ -11,6 +11,21 @@ VOTE_URL_TEMPLATE = (
 DOC_DIR = "docs"
 DELAY = 1
 
+VOTE_DETAILS = "votes.csv"
+VOTE_HEADERS = "vote_headers.csv"
+
+
+def _init_csvs():
+    """
+    save CSV titles
+    """
+    s = "session,kind,docnum,date,time,title,yay,nay,abstain,dnv,total,result"
+    with open(VOTE_HEADERS, "w") as f:
+        f.write(s + "\n")
+    s = "docnum,date,time,title,name,vote"
+    with open(VOTE_DETAILS, "w") as f:
+        f.write(s+ "\n")
+
 
 def parse_vote_header(html):
     """
@@ -43,16 +58,25 @@ def parse_vote_header(html):
     # '№ 7 від 29.08.2019 14:54:57'
     match = re.search(r"\s(\d*)\s.*\s(\d+\.\d+.\d+)\s(\d+\:\d+\:\d+)", dt)
     num, day, tme = match[1], match[2], match[3]
-    return {
-        "session": sess,
-        "kind": kind,
-        "docnum": num,
-        "date": day,
-        "time": tme,
-        "title": title,
-        "summary": summary,
-        "result": result,
-    }
+
+    rx = r"За - (\d+) Проти - (\d+) Утрималися - (\d+) Не голосували - (\d+) Всього - (\d+)"
+    m = re.search(rx, summary)
+    yay, nay, abstain, dnv, total = m[1], m[2], m[3], m[4], m[5]
+
+    return (
+        sess,
+        kind,
+        num,
+        day,
+        tme,
+        title,
+        yay,
+        nay,
+        abstain,
+        dnv,
+        total,
+        result,
+    )
 
 
 def parse_vote_body(html) -> list:
@@ -61,10 +85,10 @@ def parse_vote_body(html) -> list:
 
         <td class="hcol1">Урбанський А.І.</td>
         <td>Не голосував</td>
-    
+
     Returns list of tuples like:
 
-    [('Аліксійчук О.В.', 'За'), ('Аллахвердієва І.В.', 'За'), 
+    [('Аліксійчук О.В.', 'За'), ('Аллахвердієва І.В.', 'За'),
         ('Ананченко М.О.', 'За'), ('Андрійович З.М.', 'За'),
         ...
     ]
@@ -73,11 +97,30 @@ def parse_vote_body(html) -> list:
     return re.findall(rx, html, re.S)
 
 
-
 def save_doc(id, html):
     with open(f"{DOC_DIR}/vote_{id}.html", "w") as f:
         f.write(html)
 
+
+def save_parsed_vote(header, votes):
+    import os.path
+    import csv
+
+    if not (os.path.isfile(VOTE_HEADERS) and os.path.isfile(VOTE_DETAILS)):
+        print("creating csv headers")
+        _init_csvs()
+
+    with open(VOTE_HEADERS, "a", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerow(header)
+
+    pre = header[2:5]  # num, day, time
+    post = header[5:6]  # title
+
+    with open(VOTE_DETAILS, "a", newline="") as f:
+        writer = csv.writer(f)
+        writer.writerows(pre + vote + post for vote in votes)
+    print("all done")
 
 def get_one_vote_doc(id) -> (int, str):
     """ get single vote result """
@@ -98,7 +141,7 @@ def gen_docs(start=25, end=26):
 
 
 def scrape_and_save(start=25, end=26):
-    """scrape a range of voting docs from rada"""
+    """dl and save a range of voting docs from rada"""
     for id, code, html in gen_docs(start, end):
         if code == 200:
             save_doc(id, html)
@@ -106,13 +149,13 @@ def scrape_and_save(start=25, end=26):
 
 
 def get_and_parse_votes(start=25, end=26):
-    """scrape a range of voting docs from rada"""
+    """dl and parse a range of voting docs from rada"""
     for id, code, html in gen_docs(start, end):
         if code == 200:
             save_doc(id, html)
             header = parse_vote_header(html)
             votes = parse_vote_body(html)
-
+            save_parsed_vote(header, votes)
         else:
             print(f"error {code}")
 
@@ -123,7 +166,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "mode",
-        choices=["parse", "scrape", "reparse"],
+        choices=["parse", "scrape", "reparse", "_init_csvs"],
         help="Mode of operation: \n parse: download and parse votes \n dl: just download \n reparse: parse a single vote result",
     )
     parser.add_argument("--start", default=25, type=int, help="starting seq #")
