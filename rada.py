@@ -14,8 +14,8 @@ VOTE_URL_TEMPLATE = (
 DOC_DIR = "source_docs"
 DELAY = 1
 
-VOTE_DETAILS = "votes.csv"
-VOTE_HEADERS = "vote_headers.csv.gz"
+VOTE_DETAILS = "votes.csv.gz"
+VOTE_HEADERS = "vote_headers.csv"
 
 
 def _init_csvs():
