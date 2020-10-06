@@ -22,7 +22,7 @@ def _init_csvs():
     s = "session,kind,docnum,date,time,title,yay,nay,abstain,dnv,total,result"
     with open(VOTE_HEADERS, "w") as f:
         f.write(s + "\n")
-    s = "docnum,date,time,title,name,vote"
+    s = "docnum,date,time,name,vote"
     with open(VOTE_DETAILS, "w") as f:
         f.write(s+ "\n")
 
@@ -119,7 +119,7 @@ def save_parsed_vote(header, votes):
 
     with open(VOTE_DETAILS, "a", newline="") as f:
         writer = csv.writer(f)
-        writer.writerows(pre + vote + post for vote in votes)
+        writer.writerows(pre + vote for vote in votes)
 
 
 def get_one_vote_doc(id) -> (int, str):
@@ -164,7 +164,7 @@ def reparse():
     import glob
     print("Will reparse all vote*.html files in ", DOC_DIR)
     _init_csvs()
-    for fname in glob.glob(f"{DOC_DIR}/vote*.html"):
+    for fname in sorted(glob.glob(f"{DOC_DIR}/vote*.html")):
         print("reparse: ", fname, end=' ... ')
         try:
             with open(fname, 'r') as f:
