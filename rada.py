@@ -120,7 +120,7 @@ def save_parsed_vote(header, votes):
     with open(VOTE_DETAILS, "a", newline="") as f:
         writer = csv.writer(f)
         writer.writerows(pre + vote + post for vote in votes)
-    print("all done")
+
 
 def get_one_vote_doc(id) -> (int, str):
     """ get single vote result """
@@ -160,6 +160,25 @@ def get_and_parse_votes(start=25, end=26):
             print(f"error {code}")
 
 
+def reparse():
+    import glob
+    print("Will reparse all vote*.html files in ", DOC_DIR)
+    _init_csvs()
+    for fname in glob.glob(f"{DOC_DIR}/vote*.html"):
+        print("reparse: ", fname, end=' ... ')
+        try:
+            with open(fname, 'r') as f:
+                html = f.read()
+                header = parse_vote_header(html)
+                votes = parse_vote_body(html)
+                save_parsed_vote(header, votes)
+                print('ok')
+        except Exception as e:
+            print(e)
+
+
+
+
 def main():
     import argparse
 
@@ -177,7 +196,7 @@ def main():
     elif args.mode == "parse":
         get_and_parse_votes(args.start, args.end)
     elif args.mode == "reparse":
-        reparse(args.start, args.end)
+        reparse()
 
 
 if __name__ == "__main__":
