@@ -2,6 +2,9 @@ import requests
 import time
 import re
 import csv
+
+import gzip
+
 from pyquery import PyQuery as pq
 
 
@@ -12,7 +15,7 @@ DOC_DIR = "docs"
 DELAY = 1
 
 VOTE_DETAILS = "votes.csv"
-VOTE_HEADERS = "vote_headers.csv"
+VOTE_HEADERS = "vote_headers.csv.gz"
 
 
 def _init_csvs():
@@ -20,10 +23,10 @@ def _init_csvs():
     save CSV titles
     """
     s = "session,kind,docnum,date,time,title,yay,nay,abstain,dnv,total,result"
-    with open(VOTE_HEADERS, "w") as f:
+    with open(VOTE_HEADERS, "wt") as f:
         f.write(s + "\n")
     s = "docnum,date,time,name,vote"
-    with open(VOTE_DETAILS, "w") as f:
+    with gzip.open(VOTE_DETAILS, "wt") as f:
         f.write(s+ "\n")
 
 
@@ -98,7 +101,7 @@ def parse_vote_body(html) -> list:
 
 
 def save_doc(id, html):
-    with open(f"{DOC_DIR}/vote_{id}.html", "w") as f:
+    with gzip.open(f"{DOC_DIR}/vote_{id}.html.gz", "w") as f:
         f.write(html)
 
 
@@ -110,14 +113,14 @@ def save_parsed_vote(header, votes):
         print("creating csv headers")
         _init_csvs()
 
-    with open(VOTE_HEADERS, "a", newline="") as f:
+    with open(VOTE_HEADERS, "at", newline="") as f:
         writer = csv.writer(f)
         writer.writerow(header)
 
     pre = header[2:5]  # num, day, time
     post = header[5:6]  # title
 
-    with open(VOTE_DETAILS, "a", newline="") as f:
+    with gzip.open(VOTE_DETAILS, "at", newline="") as f:
         writer = csv.writer(f)
         writer.writerows(pre + vote for vote in votes)
 
@@ -164,10 +167,10 @@ def reparse():
     import glob
     print("Will reparse all vote*.html files in ", DOC_DIR)
     _init_csvs()
-    for fname in sorted(glob.glob(f"{DOC_DIR}/vote*.html")):
+    for fname in sorted(glob.glob(f"{DOC_DIR}/vote*.html.gz")):
         print("reparse: ", fname, end=' ... ')
         try:
-            with open(fname, 'r') as f:
+            with gzip.open(fname, 'rt') as f:
                 html = f.read()
                 header = parse_vote_header(html)
                 votes = parse_vote_body(html)
