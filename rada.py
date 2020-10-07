@@ -188,7 +188,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "mode",
-        choices=["parse", "scrape", "reparse", "_init_csvs"],
+        choices=["parse", "scrape", "reparse"],
         help="Mode of operation: \n parse: download and parse votes \n dl: just download \n reparse: parse a single vote result",
     )
     parser.add_argument("--start", default=25, type=int, help="starting seq #")
